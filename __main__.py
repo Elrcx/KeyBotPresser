@@ -84,20 +84,26 @@ def perform_actions(actions):
     Performs the configured actions from the action queue.
     """
     for action in actions:
-        key = action.get("key")
+        keys = action.get("key", [])
         press_duration = action.get("duration", 0.1)
-        wait_time = action.get("wait_time", 0.1)
+        release_delay = action.get("delay", 0.0)
+        wait_time = action.get("wait_time", 0.0)
 
-        if not key:
-            print("Skipping action with no key specified.")
+        if not keys:
+            print("Skipping action with no keys specified.")
             continue
 
-        print(f"Pressing {key} for {press_duration}s and waiting {wait_time}s.")
-        keyboard.press(key)
+        delay_text = f" (delay {release_delay})" if release_delay > 0.0 else ""
+        print(f"Pressing {keys} for {press_duration}s and waiting {wait_time}s.{delay_text}")
+        for key in keys:
+            keyboard.press(key)
         time.sleep(press_duration)
-        keyboard.release(key)
+        for key in keys:
+            keyboard.release(key)
+            time.sleep(release_delay)
         time.sleep(wait_time)
     print(f"All actions have been performed. Press 'End' to go back.")
+
 
 
 def monitor_keys():
