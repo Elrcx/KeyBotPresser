@@ -10,6 +10,8 @@ CONFIG_DIRECTORY = "configs"
 FILES_PER_PAGE = 9
 TITLE_MESSAGE = "Press 'Home' to start, 'End' to stop, or 'Insert' to select a configuration."
 
+running = False
+
 
 def load_config(filename):
     """
@@ -86,6 +88,8 @@ def perform_actions(actions):
     Performs the configured actions from the action queue.
     """
     for action in actions:
+        if not running:
+            break
         keys = action.get("key", [])
         press_duration = action.get("duration", 0.1)
         release_delay = action.get("delay", 0.0)
@@ -104,15 +108,16 @@ def perform_actions(actions):
             keyboard.release(key)
             time.sleep(release_delay)
         time.sleep(wait_time)
-    print(f"All actions have been performed. Press 'End' to go back.")
+    if running:
+        print(f"All actions have been performed. Press 'End' to go back.")
 
 
 def monitor_keys():
     """
     Handles starting and stopping actions from the action queue and allows file selection.
     """
+    global running
     print(f"Program is running in the background.")
-    running = False
     actions = None
 
     while actions is None:
@@ -129,7 +134,7 @@ def monitor_keys():
         if keyboard.is_pressed("home") and not running:
             print("Home key pressed. Starting action queue.")
             running = True
-            perform_actions(actions)
+            threading.Thread(target=perform_actions, args=(actions,), daemon=True).start()
             time.sleep(0.5)
         elif keyboard.is_pressed("end") and running:
             print(f"End key pressed. Stopping action queue.\n{TITLE_MESSAGE}")
