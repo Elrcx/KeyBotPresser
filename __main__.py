@@ -110,10 +110,20 @@ def monitor_keys():
     """
     Handles starting and stopping actions from the action queue and allows file selection.
     """
-    print(f"Program is running in the background.\n{TITLE_MESSAGE}")
+    print(f"Program is running in the background.")
     running = False
     in_config = False
-    actions = load_config("config_example.json")
+    actions = None
+
+    while actions is None:
+        print("No configuration loaded. Please select a file.")
+        selected_file = select_file()
+        if selected_file:
+            actions = load_config(selected_file)
+        else:
+            print("No file selected. Waiting for user input.")
+
+    print(f"{TITLE_MESSAGE}")
 
     while True:
         if keyboard.is_pressed("home") and not running and not in_config:
