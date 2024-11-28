@@ -58,8 +58,8 @@ def select_file():
     Handles file selection and pagination for configuration files.
     """
     page = 1
+    files, total_pages = list_files(page)
     while True:
-        files, total_pages = list_files(page)
         event = keyboard.read_event()
         if event.event_type == "down":
             if event.name in map(str, range(1, FILES_PER_PAGE + 1)):
@@ -71,9 +71,11 @@ def select_file():
             elif event.name == "-":
                 if page > 1:
                     page -= 1
+                files, total_pages = list_files(page)
             elif event.name == "+":
                 if page < total_pages:
                     page += 1
+                files, total_pages = list_files(page)
             elif event.name == "delete":
                 print("Going back to waiting state without loading.")
                 return None
