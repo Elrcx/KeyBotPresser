@@ -8,7 +8,7 @@ from math import ceil
 
 CONFIG_DIRECTORY = "configs"
 FILES_PER_PAGE = 9
-TITLE_MESSAGE = "Press 'Home' to start, 'End' to stop, or 'Insert' to select a configuration."
+TITLE_MESSAGE = "Press 'Home' to start, 'End' to stop, 'Insert' to select a configuration, or 'Page Up' to toggle looping."
 
 running = False
 
@@ -83,33 +83,41 @@ def select_file():
                 return None
 
 
-def perform_actions(actions):
+def perform_actions(actions, looping):
     """
     Performs the configured actions from the action queue.
     """
-    for action in actions:
-        if not running:
+    while running:  # Continue running until `running` is set to False
+        for action in actions:
+            if not running:
+                break
+            keys = action.get("key", [])
+            press_duration = action.get("duration", 0.1)
+            release_delay = action.get("delay", 0.0)
+            wait_time = action.get("wait_time", 0.0)
+
+            if not keys:
+                print("Skipping action with no keys specified.")
+                continue
+
+            delay_text = f" (delay {release_delay})" if release_delay > 0.0 else ""
+            print(f"Pressing {keys} for {press_duration}s and waiting {wait_time}s.{delay_text}")
+            for key in keys:
+                keyboard.press(key)
+            time.sleep(press_duration)
+            for key in keys:
+                keyboard.release(key)
+                time.sleep(release_delay)
+            time.sleep(wait_time)
+
+        if looping and running:
+            print("Loop completed, starting again...")
+        else:
             break
-        keys = action.get("key", [])
-        press_duration = action.get("duration", 0.1)
-        release_delay = action.get("delay", 0.0)
-        wait_time = action.get("wait_time", 0.0)
 
-        if not keys:
-            print("Skipping action with no keys specified.")
-            continue
-
-        delay_text = f" (delay {release_delay})" if release_delay > 0.0 else ""
-        print(f"Pressing {keys} for {press_duration}s and waiting {wait_time}s.{delay_text}")
-        for key in keys:
-            keyboard.press(key)
-        time.sleep(press_duration)
-        for key in keys:
-            keyboard.release(key)
-            time.sleep(release_delay)
-        time.sleep(wait_time)
     if running:
         print(f"All actions have been performed. Press 'End' to go back.")
+
 
 
 def monitor_keys():
@@ -119,6 +127,7 @@ def monitor_keys():
     global running
     print(f"Program is running in the background.")
     actions = None
+    looping = False
 
     while actions is None:
         print("No configuration loaded. Please select a file.")
@@ -134,7 +143,7 @@ def monitor_keys():
         if keyboard.is_pressed("home") and not running:
             print("Home key pressed. Starting action queue.")
             running = True
-            threading.Thread(target=perform_actions, args=(actions,), daemon=True).start()
+            threading.Thread(target=perform_actions, args=(actions,looping,), daemon=True).start()
             time.sleep(0.5)
         elif keyboard.is_pressed("end") and running:
             print(f"End key pressed. Stopping action queue.\n{TITLE_MESSAGE}")
@@ -149,6 +158,10 @@ def monitor_keys():
                     print(f"Loaded configuration from {selected_file}.\n{TITLE_MESSAGE}")
             else:
                 print(f"No file loaded. Returning to waiting state.\n{TITLE_MESSAGE}")
+        elif keyboard.is_pressed("page up") and not running:
+            looping = not looping
+            print(f"Looping set to: {looping}")
+            time.sleep(0.5)
 
 
 if __name__ == "__main__":
