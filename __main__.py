@@ -5,13 +5,31 @@ import json
 import threading
 from math import ceil
 import colors
+import queue
 
 
 CONFIG_DIRECTORY = "configs"
 FILES_PER_PAGE = 9
 TITLE_MESSAGE = f"{colors.FORE_YELLOW}Press 'Home' to start, 'End' to stop, 'Insert' to select a configuration, or 'Page Up' to toggle looping.{colors.RESET}"
 
+stop_event = threading.Event()
+key_event_queue = queue.Queue()
 running = False
+
+
+def key_listener():
+    """
+    Listens for keypresses and places them in a queue.
+    """
+    pressed_keys = set()
+    def handle_key(event):
+        if event.event_type == "down" and event.name not in pressed_keys:
+            key_event_queue.put(event.name)
+            pressed_keys.add(event.name)
+        elif event.event_type == "up" and event.name in pressed_keys:
+            pressed_keys.remove(event.name)
+    keyboard.hook(handle_key)
+
 
 def load_config(filename):
     """
@@ -123,8 +141,10 @@ def perform_actions(actions, looping):
 def monitor_keys():
     """
     Handles starting and stopping actions from the action queue and allows file selection.
+    Processes key events from the queue.
     """
     global running
+    threading.Thread(target=key_listener, daemon=True).start()
     print(f"Program is running in the background.")
     actions = None
     looping = False
@@ -140,28 +160,29 @@ def monitor_keys():
     print(f"{TITLE_MESSAGE}")
 
     while True:
-        if keyboard.is_pressed("home") and not running:
-            print("Home key pressed. Starting action queue.")
-            running = True
-            threading.Thread(target=perform_actions, args=(actions,looping,), daemon=True).start()
-            time.sleep(0.5)
-        elif keyboard.is_pressed("end") and running:
-            print(f"End key pressed. Stopping action queue.\n{TITLE_MESSAGE}")
-            running = False
-            time.sleep(0.5)
-        elif keyboard.is_pressed("insert") and not running:
-            print("Insert key pressed. Opening file selection.")
-            selected_file = select_file()
-            if selected_file:
-                actions = load_config(selected_file)
-                if actions is not None:
-                    print(f"Loaded configuration from {selected_file}.\n{TITLE_MESSAGE}")
-            else:
-                print(f"No file loaded. Returning to waiting state.\n{TITLE_MESSAGE}")
-        elif keyboard.is_pressed("page up") and not running:
-            looping = not looping
-            print(f"Looping set to: {looping}")
-            time.sleep(0.5)
+        if not key_event_queue.empty():
+            key = key_event_queue.get()
+            if key == "home" and not running:
+                print("Home key pressed. Starting action queue.")
+                running = True
+                stop_event.clear()
+                threading.Thread(target=perform_actions, args=(actions, looping,), daemon=True).start()
+            elif key == "end" and running:
+                print(f"End key pressed. Stopping action queue.\n{TITLE_MESSAGE}")
+                stop_event.set()
+                running = False
+            elif key == "insert" and not running:
+                print("Insert key pressed. Opening file selection.")
+                selected_file = select_file()
+                if selected_file:
+                    actions = load_config(selected_file)
+                    if actions is not None:
+                        print(f"Loaded configuration from {selected_file}.\n{TITLE_MESSAGE}")
+                else:
+                    print(f"No file loaded. Returning to waiting state.\n{TITLE_MESSAGE}")
+            elif key == "page up" and not running:
+                looping = not looping
+                print(f"Looping set to: {looping}")
 
 
 if __name__ == "__main__":
