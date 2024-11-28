@@ -113,13 +113,15 @@ def perform_actions(actions, looping):
             press_duration = action.get("duration", 0.1)
             release_delay = action.get("delay", 0.0)
             wait_time = action.get("wait_time", 0.0)
+            tag = action.get("tag", "")
 
             if not keys:
                 print("Skipping action with no keys specified.")
                 continue
 
             delay_text = f" (delay {colors.FORE_GREEN}{release_delay}s{colors.RESET})" if release_delay > 0.0 else ""
-            print(f"Pressing {colors.FORE_GREEN}{keys}{colors.RESET} for {colors.FORE_GREEN}{press_duration}s{colors.RESET} and waiting {colors.FORE_GREEN}{wait_time}s{colors.RESET}.{delay_text}")
+            tag = "" if tag == "" else f" {colors.FORE_BLUE}{colors.BACK_WHITE} {tag} {colors.RESET}"
+            print(f"Pressing {colors.FORE_GREEN}{keys}{colors.RESET} for {colors.FORE_GREEN}{press_duration}s{colors.RESET} and waiting {colors.FORE_GREEN}{wait_time}s{colors.RESET}.{delay_text}{tag}")
             for key in keys:
                 keyboard.press(key)
             time.sleep(press_duration)
