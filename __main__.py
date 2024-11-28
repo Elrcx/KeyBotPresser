@@ -107,14 +107,12 @@ def perform_actions(actions):
     print(f"All actions have been performed. Press 'End' to go back.")
 
 
-
 def monitor_keys():
     """
     Handles starting and stopping actions from the action queue and allows file selection.
     """
     print(f"Program is running in the background.")
     running = False
-    in_config = False
     actions = None
 
     while actions is None:
@@ -128,25 +126,23 @@ def monitor_keys():
     print(f"{TITLE_MESSAGE}")
 
     while True:
-        if keyboard.is_pressed("home") and not running and not in_config:
+        if keyboard.is_pressed("home") and not running:
             print("Home key pressed. Starting action queue.")
             running = True
             perform_actions(actions)
+            time.sleep(0.5)
         elif keyboard.is_pressed("end") and running:
             print(f"End key pressed. Stopping action queue.\n{TITLE_MESSAGE}")
             running = False
             time.sleep(0.5)
-        elif keyboard.is_pressed("insert") and not running and not in_config:
+        elif keyboard.is_pressed("insert") and not running:
             print("Insert key pressed. Opening file selection.")
-            in_config = True
             selected_file = select_file()
             if selected_file:
                 actions = load_config(selected_file)
-                in_config = False
                 if actions is not None:
                     print(f"Loaded configuration from {selected_file}.\n{TITLE_MESSAGE}")
             else:
-                in_config = False
                 print(f"No file loaded. Returning to waiting state.\n{TITLE_MESSAGE}")
 
 
