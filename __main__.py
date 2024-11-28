@@ -4,14 +4,14 @@ import time
 import json
 import threading
 from math import ceil
+import colors
 
 
 CONFIG_DIRECTORY = "configs"
 FILES_PER_PAGE = 9
-TITLE_MESSAGE = "Press 'Home' to start, 'End' to stop, 'Insert' to select a configuration, or 'Page Up' to toggle looping."
+TITLE_MESSAGE = f"{colors.FORE_YELLOW}Press 'Home' to start, 'End' to stop, 'Insert' to select a configuration, or 'Page Up' to toggle looping.{colors.RESET}"
 
 running = False
-
 
 def load_config(filename):
     """
@@ -22,10 +22,10 @@ def load_config(filename):
         with open(f"{file_location}", "r") as file:
             return json.load(file)
     except FileNotFoundError:
-        print(f"Error: {file_location} file not found.")
+        print(f"{colors.FORE_RED}Error: {file_location} file not found.{colors.RESET}")
         return None
     except json.JSONDecodeError:
-        print(f"Error: Decoding {filename} failed (wrong JSON format).")
+        print(f"{colors.FORE_RED}Error: Decoding {filename} failed (wrong JSON format).{colors.RESET}")
         return None
 
 
@@ -41,17 +41,17 @@ def list_files(page=1):
         current_files = files[start_idx:end_idx]
 
         print("\n*----------------------------------------------------*")
-        print(f"Page {page}/{total_pages}")
+        print(f"Page {page}/{total_pages}:")
         for i, file in enumerate(current_files, start=1):
-            print(f"\t{i}. {file}")
+            print(f"\t{colors.FORE_GREEN}{i}{colors.RESET}. {file}")
 
         if total_pages > 1:
-            print("[-] Previous Page  [+] Next Page")
-        print("[Delete] Go Back")
+            print(f"{colors.FORE_GREEN}[-]{colors.RESET} Previous Page  {colors.FORE_GREEN}[+]{colors.RESET} Next Page")
+        print(f"{colors.FORE_GREEN}[Delete]{colors.RESET} Go Back")
         print("*----------------------------------------------------*\n")
         return current_files, total_pages
     except FileNotFoundError:
-        print(f"Error: Directory {CONFIG_DIRECTORY} not found.")
+        print(f"{colors.FORE_RED}Error: Directory {CONFIG_DIRECTORY} not found.{colors.RESET}")
         return [], 1
 
 
@@ -100,8 +100,8 @@ def perform_actions(actions, looping):
                 print("Skipping action with no keys specified.")
                 continue
 
-            delay_text = f" (delay {release_delay})" if release_delay > 0.0 else ""
-            print(f"Pressing {keys} for {press_duration}s and waiting {wait_time}s.{delay_text}")
+            delay_text = f" (delay {colors.FORE_GREEN}{release_delay}s{colors.RESET})" if release_delay > 0.0 else ""
+            print(f"Pressing {colors.FORE_GREEN}{keys}{colors.RESET} for {colors.FORE_GREEN}{press_duration}s{colors.RESET} and waiting {colors.FORE_GREEN}{wait_time}s{colors.RESET}.{delay_text}")
             for key in keys:
                 keyboard.press(key)
             time.sleep(press_duration)
@@ -111,12 +111,12 @@ def perform_actions(actions, looping):
             time.sleep(wait_time)
 
         if looping and running:
-            print("Loop completed, starting again...")
+            print(f"{colors.FORE_YELLOW}Loop completed, starting again...{colors.RESET}")
         else:
             break
 
     if running:
-        print(f"All actions have been performed. Press 'End' to go back.")
+        print(f"{colors.FORE_YELLOW}All actions have been performed. Press 'End' to go back.{colors.RESET}")
 
 
 
@@ -130,12 +130,12 @@ def monitor_keys():
     looping = False
 
     while actions is None:
-        print("No configuration loaded. Please select a file.")
+        print(f"{colors.FORE_YELLOW}No configuration loaded. Please select a file.{colors.RESET}")
         selected_file = select_file()
         if selected_file:
             actions = load_config(selected_file)
         else:
-            print("No file selected. Waiting for user input.")
+            print(f"{colors.FORE_RED}No file selected. Waiting for user input.{colors.RESET}")
 
     print(f"{TITLE_MESSAGE}")
 
