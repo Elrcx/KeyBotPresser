@@ -1,0 +1,22 @@
+[
+    {
+        "key": "a",
+        "duration": 0.5,
+        "wait_time": 1.0
+    },
+    {
+        "key": "d",
+        "duration": 0.5,
+        "wait_time": 0.5
+    },
+    {
+        "key": "a",
+        "duration": 1.0,
+        "wait_time": 0.0
+    },
+    {
+        "key": "d",
+        "duration": 1.0,
+        "wait_time": 0.0
+    }
+]
